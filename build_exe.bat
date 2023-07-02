@@ -1,2 +1,2 @@
 @windres icon.rc icon.o
-@g++ -o window_pin.exe icon.o main.cpp
+@g++ -o ¸m³»µe­±.exe icon.o main.cpp

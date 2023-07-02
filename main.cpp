@@ -4,6 +4,7 @@
 #include <vector>
 #include <codecvt>
 #include <locale>
+#include <algorithm>
 
 using namespace std;
 
@@ -40,6 +41,10 @@ bool CheckWindow(HWND hWnd, string title)
     }
     string windowClass = GetClass(hWnd);
     if (windowClass == "Windows.UI.Core.CoreWindow" || windowClass == "ApplicationFrameWindow" || windowClass == "Progman")
+    {
+        return false;
+    }
+    if(GetConsoleWindow() == hWnd)
     {
         return false;
     }
@@ -84,7 +89,7 @@ void ListWindows()
     {
         pair<HWND, string> window = windows[i];
         int indexLength = to_string(i + 1).length();
-        if(IsTopmost(window.first) && i != 0)
+        if(IsTopmost(window.first))
         {
             indexLength += 1;
         }
@@ -119,7 +124,7 @@ void ListWindows()
         pair<HWND, string> window = windows[i];
         int indexLength = indexLengths[i];
         int textLength = textLengths[i];
-        if(IsTopmost(window.first) && i != 0)
+        if(IsTopmost(window.first))
         {
             cout << lv << x(space, maxIndex - indexLength - 1) << "*" << i + 1 << lv << window.second << x(space, maxText - textLength) << lv << endl;
         }
@@ -137,7 +142,7 @@ void ListWindows()
 
 void SetTopmost(HWND hWnd)
 {
-    ShowWindow(hWnd, SW_SHOW);
+    ShowWindow(hWnd, SWP_SHOWWINDOW);
     SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 }
 void SetNoTopmost(HWND hWnd)
@@ -153,25 +158,42 @@ void SwitchInput()
     keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
 }
 
+bool compare(pair<HWND, string> win1, pair<HWND, string> win2)
+{
+    return win1.second > win2.second;
+}
+
 int main()
 {
-    HWND cmd = GetForegroundWindow();
+    SetConsoleTitleA("¸m³»µe­±.exe");
+    HWND cmd = GetConsoleWindow();
     SwitchInput();
-    SetTopmost(cmd);
     EnumWindows(enumWindowCallback, 0);
-    ListWindows();
-    string mode;
-    int index;
-    cout << "  pin/unpin [id]> ";
-    cin >> mode >> index;
-    HWND hWnd = windows[index - 1].first;
-    if (mode == "pin")
+    sort(windows.begin(), windows.end(), compare);
+    while(true)
     {
-        SetTopmost(hWnd);
+        SetTopmost(cmd);
+        system("cls");
+        ListWindows();
+        string mode;
+        int index;
+        cout << "  pin/unpin [id]> ";
+        cin >> mode;
+        if (mode == "exit")
+        {
+            break;
+        }
+        cin >> index;
+        HWND hWnd = windows[index - 1].first;
+        if (mode == "pin")
+        {
+            SetTopmost(hWnd);
+        }
+        else if (mode == "unpin")
+        {
+            SetNoTopmost(hWnd);
+        }
     }
-    else if (mode == "unpin")
-    {
-        SetNoTopmost(hWnd);
-    }
+    SetNoTopmost(cmd);
     return 0;
 }
